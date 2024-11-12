@@ -20,7 +20,7 @@ def add(x, y):
         Sum of x + y
     """
     ### BEGIN YOUR CODE
-    pass
+    return x + y
     ### END YOUR CODE
 
 
@@ -48,7 +48,24 @@ def parse_mnist(image_filename, label_filename):
                 for MNIST will contain the values 0-9.
     """
     ### BEGIN YOUR CODE
-    pass
+    from pathlib import Path
+    path = Path(__file__)
+    path = path.parent.parent
+    with gzip.open(path / image_filename, "rb") as img_file:
+        magic_num, img_num, row, col = struct.unpack(">4i", img_file.read(16))
+        assert (magic_num == 2051)
+        tot_pixels = row * col
+        X = np.vstack([np.array(struct.unpack(f"{tot_pixels}B", img_file.read(tot_pixels)), dtype=np.float32) for _ in
+                       range(img_num)])
+        X -= np.min(X)
+        X /= np.max(X)
+
+    with gzip.open(path / label_filename, "rb") as label_file:
+        magic_num, label_num = struct.unpack(">2i", label_file.read(8))
+        assert (magic_num == 2049)
+        y = np.array(struct.unpack(f"{label_num}B", label_file.read()), dtype=np.uint8)
+
+    return X, y
     ### END YOUR CODE
 
 
@@ -68,7 +85,10 @@ def softmax_loss(Z, y):
         Average softmax loss over the sample.
     """
     ### BEGIN YOUR CODE
-    pass
+    cross_entropy_1 = Z[np.arange(Z.shape[0]), y]
+    cross_entropy_2 = np.log(np.sum(np.exp(Z), axis=1))
+    cross_entropy = np.sum(cross_entropy_2 - cross_entropy_1) / Z.shape[0]
+    return cross_entropy
     ### END YOUR CODE
 
 
@@ -91,7 +111,20 @@ def softmax_regression_epoch(X, y, theta, lr = 0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
-    pass
+    # -----theta := theta - lr x gradient(loss(h, y))-----
+    for i in range(0, X.shape[0], batch):
+        if i + batch < X.shape[0]:
+            x_batch = X[i:i + batch, ...]
+            y_batch = y[i:i + batch]
+        else:
+            x_batch = X[i:, ...]
+            y_batch = y[i:]
+            batch = x_batch.shape[0]
+        S = (np.exp(x_batch @ theta)) / np.sum(np.exp(x_batch @ theta), axis=1, keepdims=True)
+        I = np.zeros((batch, theta.shape[1]))
+        I[np.arange(batch), y_batch] = 1
+        gradient = x_batch.T @ (S - I)
+        theta -=  lr * gradient / batch
     ### END YOUR CODE
 
 
@@ -118,7 +151,33 @@ def nn_epoch(X, y, W1, W2, lr = 0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
-    pass
+    def ReLU(data: np.ndarray) -> np.ndarray:
+        data[data < 0] = 0
+        return data
+
+    for i in range(0, X.shape[0], batch):
+        if i + batch < X.shape[0]:
+            x_batch = X[i:i + batch, ...]
+            y_batch = y[i:i + batch]
+        else:
+            x_batch = X[i:, ...]
+            y_batch = y[i:]
+            batch = x_batch.shape[0]
+        # first update parameter W2
+        hidden_output = ReLU(x_batch @ W1)
+        h = hidden_output @ W2
+        S = np.exp(h) / np.sum(np.exp(h), axis=1, keepdims=True)
+        I = np.zeros((batch, W2.shape[1]))
+        I[np.arange(batch), y_batch] = 1
+        W2_gradient = hidden_output.T @ (S - I)
+
+        # second update parameter W1
+        activation_scalar_gradient = np.zeros((batch, W1.shape[1]))
+        activation_scalar_gradient[hidden_output > 0] = 1
+        W1_gradient = x_batch.T @ (activation_scalar_gradient * ((S - I) @ W2.T))
+
+        W2 -= lr * W2_gradient / batch
+        W1 -= lr * W1_gradient / batch
     ### END YOUR CODE
 
 
