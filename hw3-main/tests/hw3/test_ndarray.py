@@ -1,6 +1,8 @@
+import sys
+sys.path.append("python")
+
 import numpy as np
 import pytest
-import mugrade
 import needle as ndl
 from needle import backend_ndarray as nd
 
@@ -318,6 +320,7 @@ def test_getitem(device, params):
     A = nd.array(_A, device=device)
     lhs = fn(_A)
     rhs = fn(A)
+    print(type(rhs), rhs)
     np.testing.assert_allclose(lhs, rhs.numpy(), atol=1e-5, rtol=1e-5)
     compare_strides(lhs, rhs)
     check_same_memory(A, rhs)
@@ -463,7 +466,7 @@ def RandC(*shape, entropy=1):
     else:
         raise NotImplementedError("You need a GPU to run these tests.")
 
-
+"""
 def MugradeSubmit(things):
     mugrade.submit(Prepare(things))
 
@@ -682,6 +685,7 @@ def submit_ndarray_cuda_matmul():
 
     A, B = RandC(123, 125), RandC(125, 129)
     MugradeSubmit(A @ B)
+"""
 
 
 if __name__ == "__main__":

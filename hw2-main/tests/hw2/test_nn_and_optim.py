@@ -1,11 +1,11 @@
 import sys
 
-sys.path.append("./python")
+sys.path.append("../../python")
 import numpy as np
 import needle as ndl
 import needle.nn as nn
 
-sys.path.append("./apps")
+sys.path.append("../../apps")
 from mlp_resnet import *
 
 import mugrade
